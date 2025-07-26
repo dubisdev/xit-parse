@@ -1,6 +1,6 @@
 import { resolve } from 'path';
 import { readFileSync } from 'fs';
-import * as xit from '../../src/index.js';
+import * as xit from '../../src/index.ts';
 
 const fileInputContent = readFileSync(resolve(__dirname, './data/input.xit'), 'utf-8');
 

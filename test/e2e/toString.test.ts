@@ -1,5 +1,5 @@
 import { resolve } from 'path';
-import * as xit from '../../src/index.js';
+import * as xit from '../../src/index.ts';
 import { readFileSync  } from 'fs';
 import {describe, it, expect} from "bun:test"
 
