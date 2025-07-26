@@ -1,31 +1,31 @@
 import { describe, it, expect } from "bun:test";
-import { TaskItemStatus, TaskItemStatusValue } from "../../src/TaskItemStatus";
+import { TaskItemStatus, TaskItemStatusValue } from "../../src/domain";
 
 describe("TaskItemStatus", () => {
     describe("constructor", () => {
         it("should create a TaskItemStatus with valid 'Open' status", () => {
             const status = new TaskItemStatus("Open");
-            expect(status.value).toBe("Open");
+            expect(status.value).toBe(TaskItemStatusValue.OPEN);
         });
 
         it("should create a TaskItemStatus with valid 'Ongoing' status", () => {
             const status = new TaskItemStatus("Ongoing");
-            expect(status.value).toBe("Ongoing");
+            expect(status.value).toBe(TaskItemStatusValue.ONGOING);
         });
 
         it("should create a TaskItemStatus with valid 'Checked' status", () => {
             const status = new TaskItemStatus("Checked");
-            expect(status.value).toBe("Checked");
+            expect(status.value).toBe(TaskItemStatusValue.CHECKED);
         });
 
         it("should create a TaskItemStatus with valid 'Obsolete' status", () => {
             const status = new TaskItemStatus("Obsolete");
-            expect(status.value).toBe("Obsolete");
+            expect(status.value).toBe(TaskItemStatusValue.OBSOLETE);
         });
 
         it("should create a TaskItemStatus with valid 'In Question' status", () => {
             const status = new TaskItemStatus("In Question");
-            expect(status.value).toBe("In Question");
+            expect(status.value).toBe(TaskItemStatusValue.IN_QUESTION);
         });
 
         it("should throw an error for invalid status", () => {
@@ -58,7 +58,7 @@ describe("TaskItemStatus", () => {
 
     describe("value getter", () => {
         it("should return the correct value for each valid status", () => {
-            const validStatuses = ["Open", "Ongoing", "Checked", "Obsolete", "In Question"] as const;
+            const validStatuses = Object.values(TaskItemStatusValue);
             
             validStatuses.forEach(status => {
                 const taskStatus = new TaskItemStatus(status);
@@ -72,7 +72,7 @@ describe("TaskItemStatus", () => {
             const value2 = status.value;
             
             expect(value1).toBe(value2);
-            expect(value1).toBe("Open");
+            expect(value1).toBe(TaskItemStatusValue.OPEN);
         });
     });
 
@@ -80,7 +80,7 @@ describe("TaskItemStatus", () => {
         it("should handle status with special characters correctly", () => {
             // "In Question" contains a space, which is valid
             const status = new TaskItemStatus("In Question");
-            expect(status.value).toBe("In Question");
+            expect(status.value).toBe(TaskItemStatusValue.IN_QUESTION);
         });
 
         it("should throw descriptive error messages", () => {
@@ -99,7 +99,7 @@ describe("TaskItemStatus", () => {
             const status = new TaskItemStatus("Open");
             // TypeScript should infer the correct type
             const value: TaskItemStatusValue = status.value;
-            expect(value).toBe("Open");
+            expect(value).toBe(TaskItemStatusValue.OPEN);
         });
     });
 });

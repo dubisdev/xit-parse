@@ -1,4 +1,4 @@
-import { TaskItemStatus } from "./TaskItemStatus";
+import { TaskItemStatus } from "./domain";
 
 type TaskItemPrimitives = {
     content: string;

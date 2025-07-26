@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { TaskItemTag } from "../../src/TaskItemTag";
+import { TaskItemTag } from "../../src/domain";
 
 describe("TaskItemTag", () => {
     describe("tag name", () => {

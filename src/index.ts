@@ -10,7 +10,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import { TaskItemStatusValue } from './TaskItemStatus';
+import { TaskItemStatusValue } from './domain';
 
 // To be used when looking at *entire* line to determine type
 const xitLineTypePatterns = {
@@ -50,15 +50,10 @@ const NEWLINE_TYPE: XitItemType = 'newline'
 
 const ITEM_LEFT_SYM = '[';
 const ITEM_RIGHT_SYM = ']';
-const ITEM_STATUS_OPEN = 'Open';
 const ITEM_STATUS_OPEN_SYM = ' ';
-const ITEM_STATUS_CHECKED = 'Checked';
 const ITEM_STATUS_CHECKED_SYM = 'x'
-const ITEM_STATUS_ONGOING = 'Ongoing';
 const ITEM_STATUS_ONGOING_SYM = '@';
-const ITEM_STATUS_OBSOLETE = 'Obsolete';
 const ITEM_STATUS_OBSOLETE_SYM = '~';
-const ITEM_STATUS_IN_QUESTION = 'In Question';
 const ITEM_STATUS_IN_QUESTION_SYM = '?';
 
 /**
@@ -78,7 +73,7 @@ export function toObject(xitString: string) {
      * @param {string} content 
      * @returns {object} - an object representing the item's modifiers
      */
-    const parseXitModifiers = (content) => {
+    const parseXitModifiers = (content: string) => {
         const modifiers = {
             hasPriority: false,
             priorityLevel: 0,
@@ -132,19 +127,19 @@ export function toObject(xitString: string) {
         let readableContent = content;
         if (type === ITEM_TYPE) {
             switch (status) {
-                case ITEM_STATUS_OPEN:
+                case TaskItemStatusValue.OPEN:
                     readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.openItem, '');
                     break;
-                case ITEM_STATUS_CHECKED:
+                case TaskItemStatusValue.CHECKED:
                     readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.checkedItem, '');
                     break;
-                case ITEM_STATUS_ONGOING:
+                case TaskItemStatusValue.ONGOING:
                     readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.ongoingItem, '');
                     break;
-                case ITEM_STATUS_OBSOLETE:
+                case TaskItemStatusValue.OBSOLETE:
                     readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.obsoleteItem, '');
                     break;
-                case ITEM_STATUS_IN_QUESTION:
+                case TaskItemStatusValue.IN_QUESTION:
                     readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.inQuestionItem, '');
                     break;
             }
@@ -185,19 +180,19 @@ export function toObject(xitString: string) {
             addXitObjectGroupLine(currentGroupId, TITLE_TYPE, null, line)
             prevItemType = TITLE_TYPE;
         } else if (line.match(xitLineTypePatterns.openItem)) {
-            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, ITEM_STATUS_OPEN, line);
+            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, TaskItemStatusValue.OPEN, line);
             prevItemType = ITEM_TYPE;
         } else if (line.match(xitLineTypePatterns.checkedItem)) {
-            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, ITEM_STATUS_CHECKED, line);
+            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, TaskItemStatusValue.CHECKED, line);
             prevItemType = ITEM_TYPE;
         } else if (line.match(xitLineTypePatterns.ongoingItem)) {
-            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, ITEM_STATUS_ONGOING, line);
+            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, TaskItemStatusValue.ONGOING, line);
             prevItemType = ITEM_TYPE;
         } else if (line.match(xitLineTypePatterns.obsoleteItem)) {
-            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, ITEM_STATUS_OBSOLETE, line);
+            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, TaskItemStatusValue.OBSOLETE, line);
             prevItemType = ITEM_TYPE;
         } else if (line.match(xitLineTypePatterns.inQuestionItem)) {
-            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, ITEM_STATUS_IN_QUESTION, line);
+            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, TaskItemStatusValue.IN_QUESTION, line);
             prevItemType = ITEM_TYPE;
         } else if ((prevItemType === ITEM_TYPE || prevItemType === ITEM_DETAILS_TYPE) && line.match(xitLineTypePatterns.itemDetails)) {
             addXitObjectGroupLine(currentGroupId, ITEM_DETAILS_TYPE, null, line);
@@ -231,19 +226,19 @@ export function toString(xitObject): string {
             } else if (line.type === ITEM_TYPE || ITEM_DETAILS_TYPE) {
                 // status
                 switch (line.status) {
-                    case ITEM_STATUS_OPEN:
+                    case TaskItemStatusValue.OPEN:
                         xitString += `${ITEM_LEFT_SYM}${ITEM_STATUS_OPEN_SYM}${ITEM_RIGHT_SYM} `;
                         break;
-                    case ITEM_STATUS_CHECKED:
+                    case TaskItemStatusValue.CHECKED:
                         xitString += `${ITEM_LEFT_SYM}${ITEM_STATUS_CHECKED_SYM}${ITEM_RIGHT_SYM} `;
                         break;
-                    case ITEM_STATUS_ONGOING:
+                    case TaskItemStatusValue.ONGOING:
                         xitString += `${ITEM_LEFT_SYM}${ITEM_STATUS_ONGOING_SYM}${ITEM_RIGHT_SYM} `;
                         break;
-                    case ITEM_STATUS_OBSOLETE:
+                    case TaskItemStatusValue.OBSOLETE:
                         xitString += `${ITEM_LEFT_SYM}${ITEM_STATUS_OBSOLETE_SYM}${ITEM_RIGHT_SYM} `;
                         break;
-                    case ITEM_STATUS_IN_QUESTION:
+                    case TaskItemStatusValue.IN_QUESTION:
                         xitString += `${ITEM_LEFT_SYM}${ITEM_STATUS_IN_QUESTION_SYM}${ITEM_RIGHT_SYM} `;
                         break;
                 }

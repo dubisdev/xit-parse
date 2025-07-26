@@ -1,4 +1,4 @@
-import { TaskItemStatusValue } from "./TaskItemStatus";
+import { TaskItemStatusValue } from "./domain";
 
 enum XitDocumentItemType {
     BLANK_LINE = "blank-line",
@@ -17,7 +17,20 @@ type TaskItem = {
     rawContent: string;
     status: TaskItemStatusValue;
     tags?: string[];
-    priority?: number;
+    priority?: {
+        /**
+         * Total priority calculated from the number of ! and dots (.) in the content.
+         */
+        number: number;
+        /**
+         * Count of dots (.) to represent the priority visually.
+         */
+        paddingStart: number;
+        /**
+         * Count of dots (.) to represent the priority visually.
+         */
+        paddingEnd: number;
+    };
     dueDate?: Date;
 }
 

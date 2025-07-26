@@ -1,12 +1,12 @@
-const VALID_STATUSES = [
-    "Open",
-    "Ongoing",
-    "Checked",
-    "Obsolete",
-    "In Question"
-] as const
+export enum TaskItemStatusValue {
+    OPEN = "Open",
+    ONGOING = "Ongoing",
+    CHECKED = "Checked",
+    OBSOLETE = "Obsolete",
+    IN_QUESTION = "In Question"
+}
 
-export type TaskItemStatusValue = (typeof VALID_STATUSES)[number];
+const VALID_STATUSES = Object.values(TaskItemStatusValue);
 
 export class TaskItemStatus {
     private readonly _value: TaskItemStatusValue;
