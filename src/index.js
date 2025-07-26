@@ -1,3 +1,5 @@
+// @ts-check
+
 // NOTE - Possible improvement, this might live better as a class one day. I'm happy with it for now though.
 // TODO - If this gets >=400 lines, might be best to pull constants out into own file
 /**
@@ -88,7 +90,13 @@ function toObject(xitString) {
             hasPriority: false,
             priorityLevel: 0,
             priorityPadding: 0,
+            /**
+             * @type {string|null}
+             */
             due: null,
+            /**
+             * @type {string[]}
+             */
             tags: []
         };
 
