@@ -6,18 +6,8 @@ import { ParseXitDocumentToTextUseCase } from './application/parse-xit-document-
 // To be used when looking at *entire* line to determine type
 const xitLineTypePatterns = {
     title: /^([a-zA-Z0-9].*|\[(?!x\])[a-zA-Z0-9].*)/gm,
-    status: /^\[(?<open>[ ])|(?<ongoing>[@])|(?<checked>[x])|(?<obsolete>[~])|(?<inQuestion>[\?])\] .*/,
+    status: /^(\[(?:(?<open> )|(?<ongoing>@)|(?<checked>x)|(?<obsolete>~)|(?<inQuestion>\?))\]) /,
     itemDetails: /^([\t]+|[ ]{4}).*/gm,
-};
-
-// To be used when splitting raw content out into "human readable"/sanitized content
-// TODO -> Is this a good solution? Or is there a way to modify the regex we have above?
-const xitItemStatusDelimiterPatterns = {
-    openItem: /^\[ \] /gm,
-    checkedItem: /^\[x\] /gm,
-    ongoingItem: /^\[@\] /gm,
-    obsoleteItem: /^\[~\] /gm,
-    inQuestionItem: /^\[\?\] /gm,
 };
 
 // To be used when looking at line tokens to determine modifiers
@@ -70,27 +60,8 @@ const getItemPriority = (line: string): {
     }
 }
 
-const getContentWithoutStatus = (content: string, status: TaskItemStatusValue): string => {
-    let readableContent = content;
-    switch (status) {
-        case TaskItemStatusValue.OPEN:
-            readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.openItem, '');
-            break;
-        case TaskItemStatusValue.CHECKED:
-            readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.checkedItem, '');
-            break;
-        case TaskItemStatusValue.ONGOING:
-            readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.ongoingItem, '');
-            break;
-        case TaskItemStatusValue.OBSOLETE:
-            readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.obsoleteItem, '');
-            break;
-        case TaskItemStatusValue.IN_QUESTION:
-            readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.inQuestionItem, '');
-            break;
-    }
-
-    return readableContent
+const getContentWithoutStatus = (content: string): string => {
+    return content.replace(xitLineTypePatterns.status, '');
 }
 
 const getContentWithoutPriority = (content: string): string => {
@@ -140,7 +111,7 @@ const processGroup = (content: string): XitDocumentGroup => {
         // Get item priority
         const priority = getItemPriority(content) || undefined;
 
-        const contentWithoutStatus = getContentWithoutStatus(content, status);
+        const contentWithoutStatus = getContentWithoutStatus(content);
         const contentWithoutPriority = getContentWithoutPriority(contentWithoutStatus);
 
         groupInfo.items.push({
