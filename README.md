@@ -343,3 +343,9 @@ Books I Want to Read
   }
 }
 ```
+
+## License and Acknowledgements
+
+Original code by [David L Valentine](https://github.com/DLvalentine/xit-parse)
+
+Currently maintained by [David Jiménez](https://github.com/dubisdev)

@@ -1,15 +1,13 @@
 {
-  "name": "xit-parse",
+  "name": "@dubisdev/xit-parse",
   "version": "1.2.1",
   "description": "An Xit file parser written in plain JavaScript",
+  "type": "module",
   "main": "src/index.js",
   "scripts": {
     "test": "node test.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/DLvalentine/xit-parse.git"
-  },
+  "repository": "https://github.com/dubisdev/xit-parse",
   "keywords": [
     "xit",
     "parser",
@@ -21,12 +19,17 @@
     "javascript-file-parser"
   ],
   "author": "David L Valentine",
+  "contributors": [
+    {
+      "name": "David Jimenez Jimenez",
+      "url": "https://github.com/dubisdev"
+    }
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/DLvalentine/xit-parse/issues"
+    "url": "https://github.com/dubisdev/xit-parse/issues"
   },
-  "homepage": "https://github.com/DLvalentine/xit-parse#readme",
-  "type": "module",
+  "homepage": "https://github.com/dubisdev/xit-parse#readme",
   "engines": {
     "node": ">=22"
   }
