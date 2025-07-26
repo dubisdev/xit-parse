@@ -27,10 +27,7 @@
   },
   "homepage": "https://github.com/DLvalentine/xit-parse#readme",
   "type": "module",
-  "dependencies": {
-    "uuid": "^9.0.0"
-  },
   "engines": {
-    "node": ">22"
+    "node": ">=22"
   }
 }

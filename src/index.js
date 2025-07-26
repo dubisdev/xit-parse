@@ -1,17 +1,15 @@
 // NOTE - Possible improvement, this might live better as a class one day. I'm happy with it for now though.
 // TODO - If this gets >=400 lines, might be best to pull constants out into own file
 /**
- * xit-pase.js
- * dependencies: uuid
+ * index.js
  * -----------
  * Utilities and constants to be used to parse/represent *.xit files, to be used in writing an xit editor.
  * There are some behaviors here that the spec doesn't count as valid, e.g. "---> 2022-01-01" not being a valid due date.
  * For the time being, I'm going to count those as valid, as I don't see anything wrong with them.
  * Another example of this would be tags that include special characters, e.g. "#dependsOn:<label>"
  */
-'use strict';
 
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 // To be used when looking at *entire* line to determine type
 const xitLineTypePatterns = {
@@ -178,7 +176,7 @@ function toObject(xitString) {
 
     // Used to track the group(s)
     // TODO -> Need some better "invalid" group handling. Right now I think we gracefully handle with a good-faith guess, but we should commit to either throwing an error or continuing with tbe best guess.
-    let currentGroupId = uuidv4();
+    let currentGroupId = randomUUID();
 
     // Build Xit object group lines here. By default (above, L120) we always assume one group, even if it is an empty file (indicating a new file)
     xitString.split('\n').forEach((line, idx) => {
@@ -205,7 +203,7 @@ function toObject(xitString) {
             prevItemType = ITEM_DETAILS_TYPE;
         } else if (line.match(/^[\n\r]*/gm)) {
             if (prevItemType !== null) {
-                currentGroupId = uuidv4();
+                currentGroupId = randomUUID();
             }
             prevItemType = null;
         } else {
