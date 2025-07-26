@@ -2,7 +2,7 @@
   "name": "xit-parse",
   "version": "1.2.1",
   "description": "An Xit file parser written in plain JavaScript",
-  "main": "xit-parse.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "node test.js"
   },
@@ -28,7 +28,9 @@
   "homepage": "https://github.com/DLvalentine/xit-parse#readme",
   "type": "module",
   "dependencies": {
-    "uuid": "^9.0.0",
-    "xit-parse": "^1.2.1"
+    "uuid": "^9.0.0"
+  },
+  "engines": {
+    "node": ">22"
   }
 }

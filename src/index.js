@@ -100,8 +100,7 @@ function toObject(xitString) {
         const due = content.match(xitLineModifierPatterns.dueDate);
         const tags = content.match(xitLineModifierPatterns.tag);
 
-        if (hasPriority !== null && hasPriority.length)
-        {
+        if (hasPriority !== null && hasPriority.length) {
             modifiers.hasPriority = true;
             modifiers.priorityLevel = priorityLevel;
             modifiers.priorityPadding = priorityPadding;
@@ -112,7 +111,7 @@ function toObject(xitString) {
 
         if (tags !== null && tags.length)
             modifiers.tags = tags;
-       
+
         return modifiers;
     };
 
@@ -127,13 +126,13 @@ function toObject(xitString) {
     const addXitObjectGroupLine = (uuid, type, status, content) => {
         const trimmedRawContent = content.replace(/[\n\r]*$/, '');
 
-        if(!xitObject.groups[uuid]) {
+        if (!xitObject.groups[uuid]) {
             xitObject.groups[uuid] = [];
         }
 
         let readableContent = content;
-        if(type === ITEM_TYPE) {
-            switch(status) {
+        if (type === ITEM_TYPE) {
+            switch (status) {
                 case ITEM_STATUS_OPEN:
                     readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.openItem, '');
                     break;
@@ -151,8 +150,8 @@ function toObject(xitString) {
                     break;
             }
         }
-        
-        if ( type === ITEM_TYPE || type === ITEM_DETAILS_TYPE) {
+
+        if (type === ITEM_TYPE || type === ITEM_DETAILS_TYPE) {
             readableContent = readableContent.replace(xitLineModifierPatterns.priority, '');
             readableContent = readableContent.replace(xitLineModifierPatterns.dueDate, '');
             readableContent = readableContent.replace(xitLineModifierPatterns.tag, '');
@@ -205,8 +204,7 @@ function toObject(xitString) {
             addXitObjectGroupLine(currentGroupId, ITEM_DETAILS_TYPE, null, line);
             prevItemType = ITEM_DETAILS_TYPE;
         } else if (line.match(/^[\n\r]*/gm)) {
-            if (prevItemType !== null)
-            {
+            if (prevItemType !== null) {
                 currentGroupId = uuidv4();
             }
             prevItemType = null;
@@ -229,11 +227,11 @@ function toString(xitObject) {
 
     Object.values(xitObject.groups).forEach((group) => {
         Object.values(group).forEach((line) => {
-            if(line.type === TITLE_TYPE) {
+            if (line.type === TITLE_TYPE) {
                 xitString += `${line.content}\n`;
             } else if (line.type === ITEM_TYPE || ITEM_DETAILS_TYPE) {
                 // status
-                switch(line.status) {
+                switch (line.status) {
                     case ITEM_STATUS_OPEN:
                         xitString += `${ITEM_LEFT_SYM}${ITEM_STATUS_OPEN_SYM}${ITEM_RIGHT_SYM} `;
                         break;
@@ -252,11 +250,11 @@ function toString(xitObject) {
                 }
 
                 // priority
-                if(line.modifiers.hasPriority) {
-                    for(let priorityPadding = 1; priorityPadding <= line.modifiers.priorityPadding; priorityPadding++) {
+                if (line.modifiers.hasPriority) {
+                    for (let priorityPadding = 1; priorityPadding <= line.modifiers.priorityPadding; priorityPadding++) {
                         xitString += `.`;
                     }
-                    for(let priorityLevel = 1; priorityLevel <= line.modifiers.priorityLevel; priorityLevel++) {
+                    for (let priorityLevel = 1; priorityLevel <= line.modifiers.priorityLevel; priorityLevel++) {
                         xitString += `!`;
                     }
 
@@ -267,11 +265,11 @@ function toString(xitObject) {
                 xitString += `${line.content} `;
 
                 // mods (sans priority)
-                if(line.modifiers.tags.length) {
+                if (line.modifiers.tags.length) {
                     xitString += `${line.modifiers.tags.join(' ')} `;
                 }
 
-                if(line.modifiers.due !== null) {
+                if (line.modifiers.due !== null) {
                     xitString += `-> ${line.modifiers.due}`;
                 }
 
