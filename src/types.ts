@@ -25,19 +25,25 @@ type TaskItem = {
         /**
          * Count of dots (.) to represent the priority visually.
          */
-        paddingStart: number;
-        /**
-         * Count of dots (.) to represent the priority visually.
-         */
-        paddingEnd: number;
+        padding: number;
+        paddingPosition: "start" | "end"
     };
-    dueDate?: Date;
+    dueDate?: {
+        /**
+         * Calculated JS date
+         */
+        date: Date
+        /**
+         * Text input for Date
+         */
+        textDue: string
+    };
 }
 
 export type XitDocumentGroup = {
     id: string;
     type: XitDocumentItemType.GROUP;
-    title: string;
+    title?: string;
     items: TaskItem[];
 }
 

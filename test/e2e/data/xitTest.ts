@@ -20,10 +20,13 @@ export const XitDocTestInput: XitDocument = {
                     tags: ["tag1", "tag2"],
                     priority: {
                         number: 3,
-                        paddingStart: 2,
-                        paddingEnd: 1
+                        padding: 2,
+                        paddingPosition: "start"
                     },
-                    dueDate: new Date("2023-10-01")
+                    dueDate: {
+                        textDue: "2023-10-01",
+                        date: new Date("2023-10-01")
+                    }
                 },
                 {
                     id: "1.2",
