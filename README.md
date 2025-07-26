@@ -344,6 +344,26 @@ Books I Want to Read
 }
 ```
 
+## New Spec Types
+
+A file is considered a consecution of groups and blank lines.
+Each group is surrounded by blank lines.
+
+Ex:
+
+```xit
+Group 1
+[ ] Item 1
+[ ] Item 2
+-- Blank line --
+Group 2 (empty group with title)
+-- Blank line --
+-- Blank line --
+Group 3
+[?] Item 3
+[@] Item 4
+```
+
 ## License and Acknowledgements
 
 * Original code by [David L Valentine](https://github.com/DLvalentine/xit-parse)
