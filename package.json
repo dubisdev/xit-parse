@@ -35,5 +35,8 @@
   },
   "devDependencies": {
     "@types/bun": "1.1.33"
-  }
+  },
+  "files": [
+    "src"
+  ]
 }
