@@ -1,5 +1,5 @@
 // NOTE - Possible improvement, this might live better as a class one day. I'm happy with it for now though.
-// TODO - If this gets >=400 lines, might be best to pull constants out into own file
+
 /**
  * index.js
  * -----------
@@ -10,6 +10,7 @@
  */
 
 import { randomUUID } from 'crypto';
+import { TaskItemStatusValue } from './TaskItemStatus';
 
 // To be used when looking at *entire* line to determine type
 const xitLineTypePatterns = {
@@ -40,37 +41,31 @@ const xitLineModifierPatterns = {
     tag: /#[^ ]{1,}/gm,
 };
 
-const TITLE_TYPE = 'title';
+type XitItemType = 'title' | 'item' | 'details' | 'newline';
 
-const ITEM_TYPE = 'item';
+const TITLE_TYPE: XitItemType = 'title';
+const ITEM_TYPE: XitItemType = 'item';
+const ITEM_DETAILS_TYPE: XitItemType = 'details';
+const NEWLINE_TYPE: XitItemType = 'newline'
+
 const ITEM_LEFT_SYM = '[';
 const ITEM_RIGHT_SYM = ']';
-const ITEM_STATUS_OPEN = 'open';
+const ITEM_STATUS_OPEN = 'Open';
 const ITEM_STATUS_OPEN_SYM = ' ';
-const ITEM_STATUS_CHECKED = 'checked';
+const ITEM_STATUS_CHECKED = 'Checked';
 const ITEM_STATUS_CHECKED_SYM = 'x'
-const ITEM_STATUS_ONGOING = 'ongoing';
+const ITEM_STATUS_ONGOING = 'Ongoing';
 const ITEM_STATUS_ONGOING_SYM = '@';
-const ITEM_STATUS_OBSOLETE = 'obsolete';
+const ITEM_STATUS_OBSOLETE = 'Obsolete';
 const ITEM_STATUS_OBSOLETE_SYM = '~';
-const ITEM_STATUS_IN_QUESTION = 'in-question';
+const ITEM_STATUS_IN_QUESTION = 'In Question';
 const ITEM_STATUS_IN_QUESTION_SYM = '?';
-
-const ITEM_DETAILS_TYPE = 'details';
-
-const NEWLINE_TYPE = 'newline'
-
-const PRIORITY_MOD_TYPE = 'priority';
-const DUE_DATE_MOD_TYPE = 'due';
-const TAG_MOD_TYPE = 'tag';
 
 /**
  * Given a string (the raw xit file contents), represent the xit file 
  * as a JSON object
- * @param {string} xitString 
- * @returns {object} - representation of xit file in JSON format.
  */
-function toObject(xitString) {
+export function toObject(xitString: string) {
 
     // NOTE / TODO -> 'groups' as a value might be unnecessary in the long run. Values could just be the UUIDs, but we'll see how it works out on the UI
     const xitObject = {
@@ -127,7 +122,7 @@ function toObject(xitString) {
      * @param {string} content - raw string content of line
      */
     // TODO -> Need some better "invalid" line handling. Right now I think we gracefully handle with a good-faith guess, but we should commit to either throwing an error or continuing with tbe best guess.
-    const addXitObjectGroupLine = (uuid, type, status, content) => {
+    const addXitObjectGroupLine = (uuid: string, type: XitItemType, status: TaskItemStatusValue | null, content: string) => {
         const trimmedRawContent = content.replace(/[\n\r]*$/, '');
 
         if (!xitObject.groups[uuid]) {
@@ -178,7 +173,7 @@ function toObject(xitString) {
     };
 
     // Used mostly to determine if current item is an item's details
-    let prevItemType = null;
+    let prevItemType: XitItemType | null = null;
 
     // Used to track the group(s)
     // TODO -> Need some better "invalid" group handling. Right now I think we gracefully handle with a good-faith guess, but we should commit to either throwing an error or continuing with tbe best guess.
@@ -226,7 +221,7 @@ function toObject(xitString) {
  * @param {object} xitObject 
  * @returns {string} - raw xit file contents as a string
  */
-function toString(xitObject) {
+export function toString(xitObject): string {
     let xitString = '';
 
     Object.values(xitObject.groups).forEach((group) => {
@@ -288,31 +283,4 @@ function toString(xitObject) {
 
     // To spec, ensure newline at end of file after trimming any extra space
     return xitString.trim() + '\n';
-};
-
-export {
-    toObject,
-    toString,
-    xitLineTypePatterns,
-    xitItemStatusDelimiterPatterns,
-    xitLineModifierPatterns,
-    TITLE_TYPE,
-    ITEM_TYPE,
-    ITEM_LEFT_SYM,
-    ITEM_RIGHT_SYM,
-    ITEM_STATUS_OPEN,
-    ITEM_STATUS_OPEN_SYM,
-    ITEM_STATUS_CHECKED,
-    ITEM_STATUS_CHECKED_SYM,
-    ITEM_STATUS_ONGOING,
-    ITEM_STATUS_ONGOING_SYM,
-    ITEM_STATUS_OBSOLETE,
-    ITEM_STATUS_OBSOLETE_SYM,
-    ITEM_STATUS_IN_QUESTION,
-    ITEM_STATUS_IN_QUESTION_SYM,
-    ITEM_DETAILS_TYPE,
-    NEWLINE_TYPE,
-    PRIORITY_MOD_TYPE,
-    DUE_DATE_MOD_TYPE,
-    TAG_MOD_TYPE
 };
