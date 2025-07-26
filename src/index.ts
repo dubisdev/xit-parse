@@ -13,7 +13,6 @@ const xitLineTypePatterns = {
 // To be used when looking at line tokens to determine modifiers
 const xitLineModifierPatterns = {
     priorityLine: /^\[[ @~x?]{1}\] ((?<padEnd>[!]+[.]*)|(?<padStart>[.]+[!]*)){1}[^.!]*$/,
-    priority: /[!.]{1,} /gm,
     dueDate: /-> ([0-9]{4}(-|\/){0,1}([qQwW]{0,1}[0-9]{1,2}){0,1})(-|\/){0,1}([0-9]{2}){0,1}/gm,
     tag: /#[^ ]{1,}/gm,
 };
@@ -65,7 +64,7 @@ const getContentWithoutStatus = (content: string): string => {
 }
 
 const getContentWithoutPriority = (content: string): string => {
-    return content.replace(xitLineModifierPatterns.priority, '');
+    return content.replace(/[!.]{1,} /, '');
 }
 
 
