@@ -346,6 +346,6 @@ Books I Want to Read
 
 ## License and Acknowledgements
 
-Original code by [David L Valentine](https://github.com/DLvalentine/xit-parse)
-
-Currently maintained by [David Jiménez](https://github.com/dubisdev)
+* Original code by [David L Valentine](https://github.com/DLvalentine/xit-parse)
+* Currently maintained by [David Jiménez](https://github.com/dubisdev)
+* XIT Specification by [Jan Heuermann (@jotaen)](https://github.com/jotaen/xit)
