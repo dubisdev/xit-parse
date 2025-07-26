@@ -4,9 +4,6 @@
   "description": "An Xit file parser written in plain JavaScript",
   "type": "module",
   "main": "src/index.js",
-  "scripts": {
-    "test": "node test.js"
-  },
   "repository": "https://github.com/dubisdev/xit-parse",
   "keywords": [
     "xit",
