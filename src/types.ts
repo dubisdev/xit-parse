@@ -1,6 +1,6 @@
 import { TaskItemStatusValue } from "./domain";
 
-enum XitDocumentItemType {
+export enum XitDocumentItemType {
     BLANK_LINE = "blank-line",
     GROUP = "group"
 }
@@ -34,7 +34,7 @@ type TaskItem = {
     dueDate?: Date;
 }
 
-type XitDocumentGroup = {
+export type XitDocumentGroup = {
     id: string;
     type: XitDocumentItemType.GROUP;
     title: string;
@@ -52,6 +52,5 @@ type XitDocumentItem = {
 } & (XitDocumentLine | XitDocumentGroup);
 
 export type XitDocument = {
-    fileName: string;
     items: XitDocumentItem[];
 }
