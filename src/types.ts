@@ -40,11 +40,16 @@ type TaskItem = {
     };
 }
 
+type BlankTaskItemLine = {
+    id: string;
+    blankLine: true;
+}
+
 export type XitDocumentGroup = {
     id: string;
     type: XitDocumentItemType.GROUP;
     title?: string;
-    items: TaskItem[];
+    items: (TaskItem | BlankTaskItemLine)[];
 }
 
 type XitDocumentLine = {
@@ -52,7 +57,7 @@ type XitDocumentLine = {
     type: XitDocumentItemType.BLANK_LINE;
 }
 
-type XitDocumentItem = {
+export type XitDocumentItem = {
     id: string;
     type: XitDocumentItemType;
 } & (XitDocumentLine | XitDocumentGroup);

@@ -51,6 +51,11 @@ export class ParseXitDocumentToTextUseCase {
             item.items.forEach((line) => {
                 // [checkbox] [priority] [...restOfContent: name, tags, etc]
 
+                if ("blankLine" in line) {
+                    xitString += "\n"
+                    return
+                }
+
                 // creating an item
                 const checkBox = getCheckBox(line.status)
                 const priority = line.priority && getPriorityString(line.priority)

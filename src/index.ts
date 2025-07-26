@@ -1,27 +1,12 @@
-// NOTE - Possible improvement, this might live better as a class one day. I'm happy with it for now though.
-
-/**
- * index.js
- * -----------
- * Utilities and constants to be used to parse/represent *.xit files, to be used in writing an xit editor.
- * There are some behaviors here that the spec doesn't count as valid, e.g. "---> 2022-01-01" not being a valid due date.
- * For the time being, I'm going to count those as valid, as I don't see anything wrong with them.
- * Another example of this would be tags that include special characters, e.g. "#dependsOn:<label>"
- */
-
 import { randomUUID } from 'crypto';
 import { TaskItemStatusValue } from './domain';
-import { XitDocument } from './types';
+import { XitDocument, XitDocumentGroup, XitDocumentItem, XitDocumentItemType } from './types';
 import { ParseXitDocumentToTextUseCase } from './application/parse-xit-document-to-text.use-case';
 
 // To be used when looking at *entire* line to determine type
 const xitLineTypePatterns = {
     title: /^([a-zA-Z0-9].*|\[(?!x\])[a-zA-Z0-9].*)/gm,
-    openItem: /^\[ \] .*/gm,
-    checkedItem: /^\[x\] .*/gm,
-    ongoingItem: /^\[@\] .*/gm,
-    obsoleteItem: /^\[~\] .*/gm,
-    inQuestionItem: /^\[\?\] .*/gm,
+    status: /^\[(?<open>[ ])|(?<ongoing>[@])|(?<checked>[x])|(?<obsolete>[~])|(?<inQuestion>[\?])\] .*/,
     itemDetails: /^([\t]+|[ ]{4}).*/gm,
 };
 
@@ -37,179 +22,178 @@ const xitItemStatusDelimiterPatterns = {
 
 // To be used when looking at line tokens to determine modifiers
 const xitLineModifierPatterns = {
-    priorityLine: /^.*([!]|[.]*[!]){1,} .*/gm, // FIXME -> this currently accepts "!.!" forms as valid, which is not the case. I see this as a formatting thing for now, so low priority fix.
+    priorityLine: /^\[[ @~x?]{1}\] ((?<padEnd>[!]+[.]*)|(?<padStart>[.]+[!]*)){1}[^.!]*$/,
     priority: /[!.]{1,} /gm,
     dueDate: /-> ([0-9]{4}(-|\/){0,1}([qQwW]{0,1}[0-9]{1,2}){0,1})(-|\/){0,1}([0-9]{2}){0,1}/gm,
     tag: /#[^ ]{1,}/gm,
 };
 
-type XitItemType = 'title' | 'item' | 'details' | 'newline';
+const getItemStatus = (line: string): TaskItemStatusValue | null => {
+    const statusMatch = line.match(xitLineTypePatterns.status);
+    if (!statusMatch) return null;
 
-const TITLE_TYPE: XitItemType = 'title';
-const ITEM_TYPE: XitItemType = 'item';
-const ITEM_DETAILS_TYPE: XitItemType = 'details';
-const NEWLINE_TYPE: XitItemType = 'newline'
+    const { open, ongoing, checked, obsolete, inQuestion } = statusMatch.groups || {}
 
-const ITEM_LEFT_SYM = '[';
-const ITEM_RIGHT_SYM = ']';
-const ITEM_STATUS_OPEN_SYM = ' ';
-const ITEM_STATUS_CHECKED_SYM = 'x'
-const ITEM_STATUS_ONGOING_SYM = '@';
-const ITEM_STATUS_OBSOLETE_SYM = '~';
-const ITEM_STATUS_IN_QUESTION_SYM = '?';
+    if (open) {
+        return TaskItemStatusValue.OPEN;
+    } else if (checked) {
+        return TaskItemStatusValue.CHECKED;
+    } else if (ongoing) {
+        return TaskItemStatusValue.ONGOING;
+    } else if (obsolete) {
+        return TaskItemStatusValue.OBSOLETE;
+    } else if (inQuestion) {
+        return TaskItemStatusValue.IN_QUESTION;
+    }
+
+    return null;
+};
+
+const getItemPriority = (line: string): {
+    number: number;
+    padding: number;
+    paddingPosition: 'start' | 'end';
+} | null => {
+    const hasPriority = line.match(xitLineModifierPatterns.priorityLine);
+
+    if (!hasPriority) return null;
+
+    const matchedPart = hasPriority[1];
+    const isPadStart = matchedPart.startsWith('.');
+
+    const padLength = matchedPart.match(/[.]/g)?.length || 0;
+
+    return {
+        number: matchedPart.length,
+        padding: padLength,
+        paddingPosition: isPadStart ? 'start' : 'end', // Default to start if neither
+    }
+}
+
+const getContentWithoutStatus = (content: string, status: TaskItemStatusValue): string => {
+    let readableContent = content;
+    switch (status) {
+        case TaskItemStatusValue.OPEN:
+            readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.openItem, '');
+            break;
+        case TaskItemStatusValue.CHECKED:
+            readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.checkedItem, '');
+            break;
+        case TaskItemStatusValue.ONGOING:
+            readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.ongoingItem, '');
+            break;
+        case TaskItemStatusValue.OBSOLETE:
+            readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.obsoleteItem, '');
+            break;
+        case TaskItemStatusValue.IN_QUESTION:
+            readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.inQuestionItem, '');
+            break;
+    }
+
+    return readableContent
+}
+
+const getContentWithoutPriority = (content: string): string => {
+    return content.replace(xitLineModifierPatterns.priority, '');
+}
+
+
+const processGroup = (content: string): XitDocumentGroup => {
+    const lines = content.split('\n')
+
+    const groupInfo: XitDocumentGroup = {
+        id: randomUUID(),
+        type: XitDocumentItemType.GROUP,
+        items: []
+    }
+
+    const firstLineIsEmpty = lines[0].trim() === '';
+
+    lines.forEach((content, i) => {
+        const isFirstLine = (i === 0) || (i === 1 && firstLineIsEmpty);
+        const isHeading = content.match(xitLineTypePatterns.title);
+
+        // First line might be a heading
+        if (isFirstLine && isHeading) {
+            groupInfo.title = content
+            return
+        }
+
+        const isBlankLine = content.trim() === '';
+        if (isBlankLine) {
+            groupInfo.items.push({
+                id: randomUUID(),
+                blankLine: true
+            })
+
+            return
+        }
+
+        // Get item tags
+        // Get item due date
+        // Get item content
+
+        // Get item status
+        const status = getItemStatus(content);
+        if (!status) throw new Error(`Invalid item status: ${content}`);
+
+        // Get item priority
+        const priority = getItemPriority(content) || undefined;
+
+        const contentWithoutStatus = getContentWithoutStatus(content, status);
+        const contentWithoutPriority = getContentWithoutPriority(contentWithoutStatus);
+
+        groupInfo.items.push({
+            id: randomUUID(),
+            rawContent: content,
+            status,
+            content: contentWithoutPriority,
+            priority,
+        })
+    })
+
+    return groupInfo
+}
+
 
 /**
  * Given a string (the raw xit file contents), represent the xit file 
  * as a JSON object
  */
-export function toObject(xitString: string) {
+export function toObject(xitString: string): XitDocument {
+    // Split text into groups separated by blank lines, keeping the separators
+    const splitResult = xitString.split(/(\n[ \t]*\n)/);
 
-    // NOTE / TODO -> 'groups' as a value might be unnecessary in the long run. Values could just be the UUIDs, but we'll see how it works out on the UI
-    const xitObject = {
-        groups: {}
-    };
+    // Create ordered array with content groups and separators, filtering out empty items
+    const groups: XitDocumentItem[] = [];
 
-    /**
-     * Given a line's contents, parse it for any modifiers
-     * such as tags, due dates, etc.
-     * @param {string} content 
-     * @returns {object} - an object representing the item's modifiers
-     */
-    const parseXitModifiers = (content: string) => {
-        const modifiers = {
-            hasPriority: false,
-            priorityLevel: 0,
-            priorityPadding: 0,
-            /**
-             * @type {string|null}
-             */
-            due: null,
-            /**
-             * @type {string[]}
-             */
-            tags: []
-        };
+    splitResult.forEach((item, index) => {
+        const isEmpty = item.trim() === '';
+        const isBlankLine = index % 2 !== 0;
 
-        const hasPriority = content.match(xitLineModifierPatterns.priorityLine);
-        const priorityLevel = hasPriority ? content.match(xitLineModifierPatterns.priority)[0].trim().replace(/\.*/gm, '').length : 0;
-        const priorityPadding = hasPriority ? content.match(xitLineModifierPatterns.priority)[0].trim().replace(/\!*/gm, '').length : 0;
-        const due = content.match(xitLineModifierPatterns.dueDate);
-        const tags = content.match(xitLineModifierPatterns.tag);
+        if (isBlankLine) {
+            // Add as much lines as there are blank lines
+            // This is a separator, so we add it as a blank line item
+            const totalLines = item.split('\n').length - 1; // Count the number of newlines
 
-        if (hasPriority !== null && hasPriority.length) {
-            modifiers.hasPriority = true;
-            modifiers.priorityLevel = priorityLevel;
-            modifiers.priorityPadding = priorityPadding;
+            const lines = Array.from({ length: totalLines }, () => ({
+                id: randomUUID(),
+                type: XitDocumentItemType.BLANK_LINE
+            }) as const
+            );
+
+            groups.push(...lines);
+
+            return
         }
 
-        if (due !== null && due.length)
-            modifiers.due = due[0].split('-> ')[1];
-
-        if (tags !== null && tags.length)
-            modifiers.tags = tags;
-
-        return modifiers;
-    };
-
-    /**
-     * Adds a line to a group object in the xitObject
-     * @param {string} uuid - the uuid of the group
-     * @param {string} type - xit-constant representation of item type - e.g. TITLE
-     * @param {string|null} status - if the item type has a status, this is the string representation, or null
-     * @param {string} content - raw string content of line
-     */
-    // TODO -> Need some better "invalid" line handling. Right now I think we gracefully handle with a good-faith guess, but we should commit to either throwing an error or continuing with tbe best guess.
-    const addXitObjectGroupLine = (uuid: string, type: XitItemType, status: TaskItemStatusValue | null, content: string) => {
-        const trimmedRawContent = content.replace(/[\n\r]*$/, '');
-
-        if (!xitObject.groups[uuid]) {
-            xitObject.groups[uuid] = [];
-        }
-
-        let readableContent = content;
-        if (type === ITEM_TYPE) {
-            switch (status) {
-                case TaskItemStatusValue.OPEN:
-                    readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.openItem, '');
-                    break;
-                case TaskItemStatusValue.CHECKED:
-                    readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.checkedItem, '');
-                    break;
-                case TaskItemStatusValue.ONGOING:
-                    readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.ongoingItem, '');
-                    break;
-                case TaskItemStatusValue.OBSOLETE:
-                    readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.obsoleteItem, '');
-                    break;
-                case TaskItemStatusValue.IN_QUESTION:
-                    readableContent = readableContent.replace(xitItemStatusDelimiterPatterns.inQuestionItem, '');
-                    break;
-            }
-        }
-
-        if (type === ITEM_TYPE || type === ITEM_DETAILS_TYPE) {
-            readableContent = readableContent.replace(xitLineModifierPatterns.priority, '');
-            readableContent = readableContent.replace(xitLineModifierPatterns.dueDate, '');
-            readableContent = readableContent.replace(xitLineModifierPatterns.tag, '');
-        }
-
-        // TODO -> content/rawContent newline type check could be cleaned up, fine as is.
-        // NOTE -> rawContent should never be used in toString, as it may not match state of object, as we don't provide update methods
-        // TODO (?) -> Originally out of scope, but could be nice to refactor some of this and then provide a way to create a new xit object via an xit class...
-        //          ^ I plan to do this anyway with one of my own applications that will consume this, maybe I'll circle back on that after I work on the application...
-        xitObject.groups[uuid].push(
-            {
-                type,
-                status,
-                content: type === NEWLINE_TYPE ? '\n' : readableContent.replace(/[\n\r]*$/, '').trim(),
-                rawContent: type === NEWLINE_TYPE ? '\n' : trimmedRawContent,
-                modifiers: (type === TITLE_TYPE || type === NEWLINE_TYPE) ? null : parseXitModifiers(trimmedRawContent),
-                groupID: uuid
-            }
-        );
-    };
-
-    // Used mostly to determine if current item is an item's details
-    let prevItemType: XitItemType | null = null;
-
-    // Used to track the group(s)
-    // TODO -> Need some better "invalid" group handling. Right now I think we gracefully handle with a good-faith guess, but we should commit to either throwing an error or continuing with tbe best guess.
-    let currentGroupId = randomUUID();
-
-    // Build Xit object group lines here. By default (above, L120) we always assume one group, even if it is an empty file (indicating a new file)
-    xitString.split('\n').forEach((line, idx) => {
-        if (line.match(xitLineTypePatterns.title)) {
-            addXitObjectGroupLine(currentGroupId, TITLE_TYPE, null, line)
-            prevItemType = TITLE_TYPE;
-        } else if (line.match(xitLineTypePatterns.openItem)) {
-            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, TaskItemStatusValue.OPEN, line);
-            prevItemType = ITEM_TYPE;
-        } else if (line.match(xitLineTypePatterns.checkedItem)) {
-            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, TaskItemStatusValue.CHECKED, line);
-            prevItemType = ITEM_TYPE;
-        } else if (line.match(xitLineTypePatterns.ongoingItem)) {
-            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, TaskItemStatusValue.ONGOING, line);
-            prevItemType = ITEM_TYPE;
-        } else if (line.match(xitLineTypePatterns.obsoleteItem)) {
-            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, TaskItemStatusValue.OBSOLETE, line);
-            prevItemType = ITEM_TYPE;
-        } else if (line.match(xitLineTypePatterns.inQuestionItem)) {
-            addXitObjectGroupLine(currentGroupId, ITEM_TYPE, TaskItemStatusValue.IN_QUESTION, line);
-            prevItemType = ITEM_TYPE;
-        } else if ((prevItemType === ITEM_TYPE || prevItemType === ITEM_DETAILS_TYPE) && line.match(xitLineTypePatterns.itemDetails)) {
-            addXitObjectGroupLine(currentGroupId, ITEM_DETAILS_TYPE, null, line);
-            prevItemType = ITEM_DETAILS_TYPE;
-        } else if (line.match(/^[\n\r]*/gm)) {
-            if (prevItemType !== null) {
-                currentGroupId = randomUUID();
-            }
-            prevItemType = null;
-        } else {
-            throw `ParserError: One or more lines of provided Xit are invalid starting on L${idx} with content: ${line}`;
+        // the last line is included in the split, so we need to check if it is empty
+        if (!isEmpty) {
+            groups.push(processGroup(item));
         }
     });
 
-    return xitObject;
+    return { items: groups }
 };
 
 export const toString = (input: XitDocument) => {
