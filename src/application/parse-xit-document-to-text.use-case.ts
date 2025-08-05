@@ -35,13 +35,13 @@ export class ParseXitDocumentToTextUseCase {
     }
 
     toString(xitObject: XitDocument): string {
-        let xitString = '';
+        const groupTexts: string[] = []
 
         xitObject.items.forEach((group) => {
-            let groupString = ""
+            const groupLines: string[] = []
 
             if (group.title) {
-                groupString += group.title
+                groupLines.push(group.title)
             }
 
             group.items.forEach((line) => {
@@ -56,12 +56,14 @@ export class ParseXitDocumentToTextUseCase {
 
                 const textLine = [checkBox, priority, content, tagString, dueDateString].filter(Boolean).join(" ")
 
-                groupString += `\n${textLine}`
+                groupLines.push(textLine)
             });
 
-            xitString += groupString + "\n"
+            const groupText = groupLines.join("\n") + "\n"
+
+            groupTexts.push(groupText)
         });
 
-        return xitString;
+        return groupTexts.join("\n")
     };
 }
