@@ -1,11 +1,10 @@
 import { TaskItemStatusValue } from "./domain";
 
 export enum XitDocumentItemType {
-    BLANK_LINE = "blank-line",
     GROUP = "group"
 }
 
-type TaskItem = {
+export type TaskItem = {
     id: string;
     /**
      * Content after being processed (removed tags, status, etc.). Just the "todo" part of the item.
@@ -40,27 +39,17 @@ type TaskItem = {
     };
 }
 
-type BlankTaskItemLine = {
-    id: string;
-    blankLine: true;
-}
-
 export type XitDocumentGroup = {
     id: string;
     type: XitDocumentItemType.GROUP;
     title?: string;
-    items: (TaskItem | BlankTaskItemLine)[];
-}
-
-type XitDocumentLine = {
-    id: string;
-    type: XitDocumentItemType.BLANK_LINE;
+    items: (TaskItem)[];
 }
 
 export type XitDocumentItem = {
     id: string;
     type: XitDocumentItemType;
-} & (XitDocumentLine | XitDocumentGroup);
+} & (XitDocumentGroup);
 
 export type XitDocument = {
     items: XitDocumentItem[];

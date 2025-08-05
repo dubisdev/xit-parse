@@ -1,4 +1,4 @@
-import { XitDocument, XitDocumentItemType } from "../types";
+import { XitDocument } from "../types";
 import { TaskItemStatusValue } from "../domain";
 
 const checkBoxMap = {
@@ -37,25 +37,14 @@ export class ParseXitDocumentToTextUseCase {
     toString(xitObject: XitDocument): string {
         let xitString = '';
 
-        xitObject.items.forEach((item) => {
-            if (item.type === XitDocumentItemType.BLANK_LINE) {
-                xitString += "\n"
-                return
+        xitObject.items.forEach((group) => {
+            let groupString = ""
+
+            if (group.title) {
+                groupString += group.title
             }
 
-            // Group
-            if (item.title) {
-                xitString += item.title
-            }
-
-            item.items.forEach((line) => {
-                // [checkbox] [priority] [...restOfContent: name, tags, etc]
-
-                if ("blankLine" in line) {
-                    xitString += "\n"
-                    return
-                }
-
+            group.items.forEach((line) => {
                 // creating an item
                 const checkBox = getCheckBox(line.status)
                 const priority = line.priority && getPriorityString(line.priority)
@@ -67,8 +56,10 @@ export class ParseXitDocumentToTextUseCase {
 
                 const textLine = [checkBox, priority, content, tagString, dueDateString].filter(Boolean).join(" ")
 
-                xitString += `\n${textLine}`
+                groupString += `\n${textLine}`
             });
+
+            xitString += groupString + "\n"
         });
 
         return xitString;

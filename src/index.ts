@@ -1,7 +1,9 @@
 import { randomUUID } from 'crypto';
 import { TaskItemStatusValue } from './domain';
-import { XitDocument, XitDocumentGroup, XitDocumentItem, XitDocumentItemType } from './types';
+import { TaskItem, XitDocument, XitDocumentGroup, XitDocumentItem, XitDocumentItemType } from './types';
 import { ParseXitDocumentToTextUseCase } from './application/parse-xit-document-to-text.use-case';
+
+const assertUnreachable = <T>(v: T): v is never => { throw new Error("Reached unreachable") }
 
 // To be used when looking at *entire* line to determine type
 const xitLineTypePatterns = {
@@ -68,100 +70,105 @@ const getContentWithoutPriority = (content: string): string => {
 }
 
 
-const processGroup = (content: string): XitDocumentGroup => {
-    const lines = content.split('\n')
-
-    const groupInfo: XitDocumentGroup = {
-        id: randomUUID(),
-        type: XitDocumentItemType.GROUP,
-        items: []
-    }
-
-    const firstLineIsEmpty = lines[0].trim() === '';
-
-    lines.forEach((content, i) => {
-        const isFirstLine = (i === 0) || (i === 1 && firstLineIsEmpty);
-        const isHeading = content.match(xitLineTypePatterns.title);
-
-        // First line might be a heading
-        if (isFirstLine && isHeading) {
-            groupInfo.title = content
-            return
-        }
-
-        const isBlankLine = content.trim() === '';
-        if (isBlankLine) {
-            groupInfo.items.push({
-                id: randomUUID(),
-                blankLine: true
-            })
-
-            return
-        }
-
-        // Get item tags
-        // Get item due date
-        // Get item content
-
-        // Get item status
-        const status = getItemStatus(content);
-        if (!status) throw new Error(`Invalid item status: ${content}`);
-
-        // Get item priority
-        const priority = getItemPriority(content) || undefined;
-
-        const contentWithoutStatus = getContentWithoutStatus(content);
-        const contentWithoutPriority = getContentWithoutPriority(contentWithoutStatus);
-
-        groupInfo.items.push({
-            id: randomUUID(),
-            rawContent: content,
-            status,
-            content: contentWithoutPriority,
-            priority,
-        })
-    })
-
-    return groupInfo
-}
-
-
 /**
  * Given a string (the raw xit file contents), represent the xit file 
  * as a JSON object
  */
 export function toObject(xitString: string): XitDocument {
-    // Split text into groups separated by blank lines, keeping the separators
-    const splitResult = xitString.split(/(\n[ \t]*\n)/);
+    const lines = xitString.split('\n')
 
-    // Create ordered array with content groups and separators, filtering out empty items
-    const groups: XitDocumentItem[] = [];
+    const groups: XitDocumentGroup[] = [];
 
-    splitResult.forEach((item, index) => {
-        const isEmpty = item.trim() === '';
-        const isBlankLine = index % 2 !== 0;
+    let currentGroup: XitDocumentGroup | null = null;
+    let currentTaskItem: TaskItem | null = null;
 
-        if (isBlankLine) {
-            // Add as much lines as there are blank lines
-            // This is a separator, so we add it as a blank line item
-            const totalLines = item.split('\n').length - 1; // Count the number of newlines
+    for (const line of lines) {
+        const isBlankLine = line.trim() === '';
+        const isTaskSubline = line.match(xitLineTypePatterns.itemDetails);
+        const isGroupTitle = line.match(xitLineTypePatterns.title);
+        const isTaskLine = line.match(xitLineTypePatterns.status);
 
-            const lines = Array.from({ length: totalLines }, () => ({
+        if (isBlankLine === true) {
+            if (!currentGroup) {
+                // If we have a blank line and no current group, we just skip it
+                continue;
+            }
+
+            if (currentGroup) {
+                // If we have a group and we hit a blank line, we end the task & group
+
+                // Finish processing current task
+                if (currentTaskItem) {
+                    currentGroup.items.push(currentTaskItem)
+
+                    currentTaskItem = null
+                }
+
+                // Finish processing current group
+
+                groups.push(currentGroup);
+
+                currentGroup = null;
+                continue;
+            }
+
+            assertUnreachable<never>(currentGroup)
+            continue
+        }
+
+        // Not a blank line, ensure we are in a group
+        if (currentGroup === null) {
+            // If we don't have a group, we create one
+            currentGroup = {
                 id: randomUUID(),
-                type: XitDocumentItemType.BLANK_LINE
-            }) as const
-            );
-
-            groups.push(...lines);
-
-            return
+                type: XitDocumentItemType.GROUP,
+                items: []
+            }
         }
 
-        // the last line is included in the split, so we need to check if it is empty
-        if (!isEmpty) {
-            groups.push(processGroup(item));
+        if (isGroupTitle) {
+            if (currentGroup.title) {
+                throw new Error("Trying to add a title to an already titled group")
+            }
+
+            currentGroup.title = line.trim()
+            continue
         }
-    });
+
+        if (isTaskSubline) {
+            if (!currentTaskItem) {
+                throw new Error("Cannot add a task subline outside a task")
+            }
+
+            currentTaskItem.content += ("\n" + line.trim())
+        }
+
+        if (isTaskLine) {
+            // Add previous task to group
+            if (currentTaskItem) {
+                currentGroup.items.push(currentTaskItem)
+            }
+
+            // Get item status
+            const status = getItemStatus(line);
+            if (!status) throw new Error(`Invalid item status: ${line}`);
+
+            // Get item priority
+            const priority = getItemPriority(line) || undefined;
+
+            const lineWithoutStatus = getContentWithoutStatus(line);
+            const contentWithoutPriority = getContentWithoutPriority(lineWithoutStatus);
+
+            currentTaskItem = {
+                id: randomUUID(),
+                content: contentWithoutPriority,
+                rawContent: line,
+                status,
+                priority: priority || undefined
+            }
+
+        }
+    }
 
     return { items: groups }
 };

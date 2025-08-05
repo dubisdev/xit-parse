@@ -4,10 +4,6 @@ import { XitDocument, XitDocumentItemType } from "../../../src/types";
 export const XitDocTestInput: XitDocument = {
     items: [
         {
-            id: "0",
-            type: XitDocumentItemType.BLANK_LINE
-        },
-        {
             id: "1",
             type: XitDocumentItemType.GROUP,
             title: "Test Group",
@@ -36,15 +32,10 @@ export const XitDocTestInput: XitDocument = {
                 }
             ]
         },
-        {
-            id: "2",
-            type: XitDocumentItemType.BLANK_LINE
-        }
     ]
 }
 
-export const XitDocTestOutput = `
-Test Group
+export const XitDocTestOutput = `Test Group
 [ ] ..! Task 1 #tag1 #tag2 -> 2023-10-01
 [x] Task 2
 `;
