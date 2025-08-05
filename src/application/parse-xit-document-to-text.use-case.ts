@@ -37,7 +37,7 @@ export class ParseXitDocumentToTextUseCase {
     toString(xitObject: XitDocument): string {
         const groupTexts: string[] = []
 
-        xitObject.items.forEach((group) => {
+        xitObject.groups.forEach((group) => {
             const groupLines: string[] = []
 
             if (group.title) {

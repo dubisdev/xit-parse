@@ -52,5 +52,5 @@ export type XitDocumentItem = {
 } & (XitDocumentGroup);
 
 export type XitDocument = {
-    items: XitDocumentItem[];
+    groups: XitDocumentItem[];
 }

@@ -170,7 +170,7 @@ export function toObject(xitString: string): XitDocument {
         }
     }
 
-    return { items: groups }
+    return { groups: groups }
 };
 
 export const toString = (input: XitDocument) => {

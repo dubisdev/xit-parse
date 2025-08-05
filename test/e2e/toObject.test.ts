@@ -9,7 +9,7 @@ describe("toObject", () => {
     it("should convert xit string to object", () => {
         const xitObject = xit.toObject(fileInputContent);
         expect(xitObject).toBeDefined();
-        expect(xitObject.items.length).toBeGreaterThan(0);
+        expect(xitObject.groups.length).toBeGreaterThan(0);
     });
 
     it("should convert object back to xit string format", () => {
