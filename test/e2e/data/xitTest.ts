@@ -2,7 +2,7 @@ import { TaskItemStatusValue } from "../../../src/domain";
 import { XitDocument, XitDocumentItemType } from "../../../src/types";
 
 export const XitDocTestInput: XitDocument = {
-    items: [
+    groups: [
         {
             id: "1",
             type: XitDocumentItemType.GROUP,

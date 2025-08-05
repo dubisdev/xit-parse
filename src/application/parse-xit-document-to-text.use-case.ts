@@ -56,7 +56,7 @@ export class ParseXitDocumentToTextUseCase {
 
                 const textLine = [checkBox, priority, content, tagString, dueDateString].filter(Boolean).join(" ")
 
-                groupLines.push(textLine)
+                groupLines.push(textLine.replaceAll("\n", "\n    "))
             });
 
             const groupText = groupLines.join("\n") + "\n"
