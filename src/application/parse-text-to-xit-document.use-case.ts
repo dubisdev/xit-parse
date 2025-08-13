@@ -2,58 +2,12 @@ import { randomUUID } from 'crypto';
 import { TaskItemStatusValue } from "../domain";
 import { TaskItem, XitDocument, XitDocumentGroup, XitDocumentItemType } from "../types";
 import { assertIsNever } from "../utils/assertIsNever";
+import { LineTypeDetector, TextLineTypes } from '../utils/LineTypeDetector';
 
 // To be used when looking at *entire* line to determine type
 const xitLineTypePatterns = {
     status: /^(\[(?:(?<open> )|(?<ongoing>@)|(?<checked>x)|(?<obsolete>~)|(?<inQuestion>\?))\]) /
 };
-
-const checkIsBlankLine = (line: string): boolean => {
-    return line.trim() === '';
-}
-
-const checkIsTaskLine = (line: string): boolean => {
-    const taskLinePattern = /^(\[(?:(?<open> )|(?<ongoing>@)|(?<checked>x)|(?<obsolete>~)|(?<inQuestion>\?))\]) /
-
-    return line.match(taskLinePattern) !== null;
-}
-
-const checkIsTaskSubline = (line: string): boolean => {
-    return line.match(/^([\t]+|[ ]{4}).*/gm) !== null;
-}
-
-const checkIsGroupTitle = (line: string): boolean => {
-    const titlePattern = /^([a-zA-Z0-9].*|\[(?!x\])[a-zA-Z0-9].*)/gm
-
-    return line.match(titlePattern) !== null;
-}
-
-enum TextLineTypes {
-    BLANK = 'blank',
-    TASK = 'task',
-    TASK_SUBLINE = 'task_subline',
-    GROUP_TITLE = 'group_title'
-}
-
-const detectLineType = (line: string): TextLineTypes => {
-    if (checkIsBlankLine(line)) {
-        return TextLineTypes.BLANK;
-    }
-
-    if (checkIsTaskLine(line)) {
-        return TextLineTypes.TASK;
-    }
-
-    if (checkIsTaskSubline(line)) {
-        return TextLineTypes.TASK_SUBLINE;
-    }
-
-    if (checkIsGroupTitle(line)) {
-        return TextLineTypes.GROUP_TITLE;
-    }
-
-    throw new Error(`Unknown line type for line: ${line}`);
-}
 
 // To be used when looking at line tokens to determine modifiers
 const xitLineModifierPatterns = {
@@ -126,7 +80,7 @@ export class ParseTextToXitDocumentUseCase {
         let currentTaskItem: TaskItem | null = null;
 
         for (const line of lines) {
-            const lineType = detectLineType(line);
+            const lineType = LineTypeDetector.detect(line);
 
             if (lineType === TextLineTypes.BLANK) {
                 if (!currentGroup) {
