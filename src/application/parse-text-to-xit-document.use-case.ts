@@ -28,6 +28,32 @@ const checkIsGroupTitle = (line: string): boolean => {
     return line.match(titlePattern) !== null;
 }
 
+enum TextLineTypes {
+    BLANK = 'blank',
+    TASK = 'task',
+    TASK_SUBLINE = 'task_subline',
+    GROUP_TITLE = 'group_title'
+}
+
+const detectLineType = (line: string): TextLineTypes => {
+    if (checkIsBlankLine(line)) {
+        return TextLineTypes.BLANK;
+    }
+
+    if (checkIsTaskLine(line)) {
+        return TextLineTypes.TASK;
+    }
+
+    if (checkIsTaskSubline(line)) {
+        return TextLineTypes.TASK_SUBLINE;
+    }
+
+    if (checkIsGroupTitle(line)) {
+        return TextLineTypes.GROUP_TITLE;
+    }
+
+    throw new Error(`Unknown line type for line: ${line}`);
+}
 
 // To be used when looking at line tokens to determine modifiers
 const xitLineModifierPatterns = {
@@ -100,12 +126,9 @@ export class ParseTextToXitDocumentUseCase {
         let currentTaskItem: TaskItem | null = null;
 
         for (const line of lines) {
-            const isBlankLine = checkIsBlankLine(line);
-            const isTaskSubline = checkIsTaskSubline(line)
-            const isGroupTitle = checkIsGroupTitle(line);
-            const isTaskLine = checkIsTaskLine(line);
+            const lineType = detectLineType(line);
 
-            if (isBlankLine) {
+            if (lineType === TextLineTypes.BLANK) {
                 if (!currentGroup) {
                     // If we have a blank line and no current group, we just skip it
                     continue;
@@ -143,24 +166,27 @@ export class ParseTextToXitDocumentUseCase {
                 }
             }
 
-            if (isGroupTitle) {
+            if (lineType === TextLineTypes.GROUP_TITLE) {
                 if (currentGroup.title) {
                     throw new Error("Trying to add a title to an already titled group")
                 }
 
                 currentGroup.title = line.trim()
+
                 continue
             }
 
-            if (isTaskSubline) {
+            if (lineType === TextLineTypes.TASK_SUBLINE) {
                 if (!currentTaskItem) {
                     throw new Error("Cannot add a task subline outside a task")
                 }
 
                 currentTaskItem.content += ("\n" + line.trim())
+
+                continue
             }
 
-            if (isTaskLine) {
+            if (lineType === TextLineTypes.TASK) {
                 // Add previous task to group
                 if (currentTaskItem) {
                     currentGroup.items.push(currentTaskItem)
@@ -184,7 +210,10 @@ export class ParseTextToXitDocumentUseCase {
                     priority: priority || undefined
                 }
 
+                continue
             }
+
+            assertIsNever(lineType)
         }
 
         return { groups: groups }
