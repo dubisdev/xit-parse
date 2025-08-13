@@ -5,14 +5,32 @@ import { assertIsNever } from "../utils/assertIsNever";
 
 // To be used when looking at *entire* line to determine type
 const xitLineTypePatterns = {
-    title: /^([a-zA-Z0-9].*|\[(?!x\])[a-zA-Z0-9].*)/gm,
-    status: /^(\[(?:(?<open> )|(?<ongoing>@)|(?<checked>x)|(?<obsolete>~)|(?<inQuestion>\?))\]) /,
-    itemDetails: /^([\t]+|[ ]{4}).*/gm,
+    status: /^(\[(?:(?<open> )|(?<ongoing>@)|(?<checked>x)|(?<obsolete>~)|(?<inQuestion>\?))\]) /
 };
+
+const checkIsBlankLine = (line: string): boolean => {
+    return line.trim() === '';
+}
+
+const checkIsTaskLine = (line: string): boolean => {
+    const taskLinePattern = /^(\[(?:(?<open> )|(?<ongoing>@)|(?<checked>x)|(?<obsolete>~)|(?<inQuestion>\?))\]) /
+
+    return line.match(taskLinePattern) !== null;
+}
+
+const checkIsTaskSubline = (line: string): boolean => {
+    return line.match(/^([\t]+|[ ]{4}).*/gm) !== null;
+}
+
+const checkIsGroupTitle = (line: string): boolean => {
+    const titlePattern = /^([a-zA-Z0-9].*|\[(?!x\])[a-zA-Z0-9].*)/gm
+
+    return line.match(titlePattern) !== null;
+}
+
 
 // To be used when looking at line tokens to determine modifiers
 const xitLineModifierPatterns = {
-    priorityLine: /^\[[ @~x?]{1}\] ((?<padEnd>[!]+[.]*)|(?<padStart>[.]+[!]*)){1}[^.!]*$/,
     dueDate: /-> ([0-9]{4}(-|\/){0,1}([qQwW]{0,1}[0-9]{1,2}){0,1})(-|\/){0,1}([0-9]{2}){0,1}/gm,
     tag: /#[^ ]{1,}/gm,
 };
@@ -43,7 +61,8 @@ const getItemPriority = (line: string): {
     padding: number;
     paddingPosition: 'start' | 'end';
 } | null => {
-    const hasPriority = line.match(xitLineModifierPatterns.priorityLine);
+    const priorityPattern = /^\[[ @~x?]{1}\] ((?<padEnd>[!]+[.]*)|(?<padStart>[.]+[!]*)){1}[^.!]*$/
+    const hasPriority = line.match(priorityPattern);
 
     if (!hasPriority) return null;
 
@@ -81,12 +100,12 @@ export class ParseTextToXitDocumentUseCase {
         let currentTaskItem: TaskItem | null = null;
 
         for (const line of lines) {
-            const isBlankLine = line.trim() === '';
-            const isTaskSubline = line.match(xitLineTypePatterns.itemDetails);
-            const isGroupTitle = line.match(xitLineTypePatterns.title);
-            const isTaskLine = line.match(xitLineTypePatterns.status);
+            const isBlankLine = checkIsBlankLine(line);
+            const isTaskSubline = checkIsTaskSubline(line)
+            const isGroupTitle = checkIsGroupTitle(line);
+            const isTaskLine = checkIsTaskLine(line);
 
-            if (isBlankLine === true) {
+            if (isBlankLine) {
                 if (!currentGroup) {
                     // If we have a blank line and no current group, we just skip it
                     continue;
